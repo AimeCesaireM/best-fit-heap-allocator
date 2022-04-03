@@ -68,11 +68,14 @@ typedef struct header {
 /** The virtual address space reserved for the heap. */
 #define HEAP_SIZE GB(2)
 
+size_t roundUp(size_t size);
+
 /** Given a pointer to a header, obtain a `void*` pointer to the block itself. */
-#define HEADER_TO_BLOCK(hp) ((void*)((intptr_t)hp + sizeof(header_s)))
+#define HEADER_TO_BLOCK(hp) ((void*)((intptr_t)hp + roundUp(sizeof(header_s))))
 
 /** Given a pointer to a block, obtain a `header_s*` pointer to its header. */
-#define BLOCK_TO_HEADER(bp) ((header_s*)((intptr_t)bp - sizeof(header_s)))
+#define BLOCK_TO_HEADER(bp) ((header_s*)((intptr_t)bp - roundUp(sizeof(header_s))))
+
 // ==============================================================================
 
 
@@ -90,6 +93,9 @@ static intptr_t end_addr   = 0;
 
 /** The head of the free list. */
 static header_s* free_list_head = NULL;
+
+/** The head of the allocated list */
+static header_s* allocated_list_head = NULL;
 // ==============================================================================
 
 
@@ -132,6 +138,13 @@ void init () {
 } // init ()
 // ==============================================================================
 
+// A method to d-word align the blocks. It rounds up any size to the nearest multiple of 16
+size_t roundUp(size_t size){
+  size_t newSize = size + 16;
+  size_t mod = newSize % 16;
+  newSize = newSize - mod;
+  return newSize;
+}
 
 // ==============================================================================
 /**
@@ -149,32 +162,34 @@ void* malloc (size_t size) {
   if (size == 0) {
     return NULL;
   }
+  size = roundUp(size);
 
   header_s* current = free_list_head;
   header_s* best    = NULL;
-  while (current != NULL) {
+  while (current != NULL) { // while we have not reached the end of the 'free' list
 
     if (current->allocated) {
-      ERROR("Allocated block on free list", (intptr_t)current);
+      ERROR("Allocated block on free list", (intptr_t)current); // throw an error if we find an allocated block on the free list
     }
     
     if ( (best == NULL && size <= current->size) ||
-	 (best != NULL && size <= current->size && current->size < best->size) ) {
+	 (best != NULL && size <= current->size && current->size < best->size) ) { // a best block is defined as one with the size greater than but closest to the requested size
       best = current;
     }
 
-    if (best != NULL && best->size == size) {
+    if (best != NULL && best->size == size) {// if we find a perfect fit, there is no need to keep moving through the list.
       break;
     }
 
     current = current->next;
     
   }
+  // now once we have a free block that can be our best fit or we couldn't find one
 
   void* new_block_ptr = NULL;
-  if (best != NULL) {
+  if (best != NULL) { // if we know the block we want, we'll remove it from the list
 
-    if (best->prev == NULL) {
+    if (best->prev == NULL) { // pointer reallocation to remove the best block from the 'free' list. classic dll remove()
       free_list_head   = best->next;
     } else {
       best->prev->next = best->next;
@@ -185,18 +200,26 @@ void* malloc (size_t size) {
     best->prev       = NULL;
     best->next       = NULL;
 
-    best->allocated = true;
-    new_block_ptr   = HEADER_TO_BLOCK(best);
+    best->allocated = true;// set its allocated flag to true
+    best->next = allocated_list_head;  //insert it at the front of the list of allocated blocks
+    allocated_list_head = best; // make it the new head of allocated blocks
+    new_block_ptr   = HEADER_TO_BLOCK(best); //get the pointer to the usable block space. NOTE: I have modified this function to take into account the paddind for alignment.
     
   } else {
 
     header_s* header_ptr = (header_s*)free_addr;
     new_block_ptr = HEADER_TO_BLOCK(header_ptr);
 
+    /*Initial values for a new block*/
     header_ptr->next      = NULL;
     header_ptr->prev      = NULL;
     header_ptr->size      = size;
     header_ptr->allocated = true;
+
+    /*Add it to the front of the list of allocated blocks*/
+    header_ptr->next = allocated_list_head;
+    allocated_list_head = header_ptr;
+    
     
     intptr_t new_free_addr = (intptr_t)new_block_ptr + size;
     if (new_free_addr > end_addr) {
