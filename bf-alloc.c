@@ -259,14 +259,25 @@ void free (void* ptr) {
   if (!header_ptr->allocated) {
     ERROR("Double-free: ", (intptr_t)header_ptr);
   }
-
-  header_ptr->next = free_list_head;
-  free_list_head   = header_ptr;
-  header_ptr->prev = NULL;
-  if (header_ptr->next != NULL) {
-    header_ptr->next->prev = header_ptr;
+  
+  // Removing the target block from the list of allocated blocks
+  if (header_ptr->prev == NULL){
+    allocated_list_head = header_ptr->next;
   }
-  header_ptr->allocated = false;
+  else {
+    header_ptr->prev->next = header_ptr->next;
+  }
+  if (header_ptr->next!= NULL){
+    header_ptr->next->prev = header_ptr->prev;
+  }
+  
+  header_ptr->next = NULL;
+  header_ptr->prev = NULL;
+  // removal complete
+
+  header_ptr->next = free_list_head; // add the freed block to the front of the list of free blocks
+  free_list_head   = header_ptr;
+  header_ptr->allocated = false; // THE DEALLOCATIO IS COMPLETE
 
 } // free()
 // ==============================================================================
