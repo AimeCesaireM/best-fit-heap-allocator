@@ -19,7 +19,7 @@ int main (int argc, char **argv){
   printf("a should be P1 %p\n", a);
   printf("b should be P2 %p\n", b);
   printf("c should not be P3 %p\n", c);
-  printf("d should be a new address %p\n", d);
+  printf("d should be a new or freed address %p\n", d);
   
   char* e = realloc(ptr1, 0); // should delete block refered to by ptr1
   printf("P1 = %p\n", ptr1);
@@ -48,7 +48,5 @@ int main (int argc, char **argv){
 
    printf("[+] Testing Free().  Freeing small copy...\n");
    free(smallCopy);
-   printf("small Copy address should stay the same: %p \n", smallCopy);
-   printf("Small Copy contents: %s \n",smallCopy);
 
 }

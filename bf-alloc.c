@@ -1,4 +1,4 @@
-// ==============================================================================
+// ============================================================================77;30503;0c==
 /**
  * bf-alloc.c
  *
@@ -69,12 +69,13 @@ typedef struct header {
 #define HEAP_SIZE GB(2)
 
 size_t roundUp(size_t size);
+size_t padding (size_t s); 
 
 /** Given a pointer to a header, obtain a `void*` pointer to the block itself. */
-#define HEADER_TO_BLOCK(hp) ((void*)((intptr_t)hp + roundUp(sizeof(header_s))))
+#define HEADER_TO_BLOCK(hp) (void*)((intptr_t)hp + sizeof(header_s))
 
 /** Given a pointer to a block, obtain a `header_s*` pointer to its header. */
-#define BLOCK_TO_HEADER(bp) ((header_s*)((intptr_t)bp - roundUp(sizeof(header_s))))
+#define BLOCK_TO_HEADER(bp) (header_s*)((intptr_t)bp - sizeof(header_s))
 
 // ==============================================================================
 
@@ -98,7 +99,10 @@ static header_s* free_list_head = NULL;
 static header_s* allocated_list_head = NULL;
 // ==============================================================================
 
-
+size_t padding (size_t s) {
+  if (s % 16 == 0)return 0;
+  else return 16 - (s % 16);
+}
 
 // ==============================================================================
 /**
@@ -162,7 +166,7 @@ void* malloc (size_t size) {
   if (size == 0) {
     return NULL;
   }
-  //  size = roundUp(size);
+  //   size = roundUp(size);
 
   header_s* current = free_list_head;
   header_s* best    = NULL;
@@ -210,6 +214,10 @@ void* malloc (size_t size) {
     header_s* header_ptr = (header_s*)free_addr;
     new_block_ptr = HEADER_TO_BLOCK(header_ptr);
 
+    size = size + padding(size);
+
+    //    size_t head_padd = padding(sizeof(header_s*));
+
     /*Initial values for a new block*/
     header_ptr->next      = NULL;
     header_ptr->prev      = NULL;
@@ -219,9 +227,11 @@ void* malloc (size_t size) {
     /*Add it to the front of the list of allocated blocks*/
     header_ptr->next = allocated_list_head;
     allocated_list_head = header_ptr;
+
+     if (header_ptr-> next != NULL){
+    header_ptr-> next ->prev = header_ptr;}// OF COURSE!! it's a doubly linked list!!
     
-    
-    intptr_t new_free_addr = (intptr_t)new_block_ptr + size;
+     intptr_t new_free_addr = (intptr_t)new_block_ptr + padding(sizeof(header_s)) + size;
     if (new_free_addr > end_addr) {
 
       return NULL;
@@ -233,6 +243,12 @@ void* malloc (size_t size) {
     }
 
   }
+  // Edits accoriding to Prof's comment
+  // Still got some questions for this (coz we've already updated the head)...
+  header_s* new_head = BLOCK_TO_HEADER(new_block_ptr);
+  if (allocated_list_head == NULL) allocated_list_head = new_head;
+  else new_head -> next = allocated_list_head;
+  
 
   return new_block_ptr;
 
@@ -278,8 +294,12 @@ void free (void* ptr) {
 
   header_ptr->next = free_list_head; // add the freed block to the front of the list of free blocks
   free_list_head   = header_ptr;
-  header_ptr->allocated = false; // THE DEALLOCATIO IS COMPLETE
-  printf("Is Allocated?: %s \n", header_ptr->allocated);
+
+  if (header_ptr-> next != NULL){
+    header_ptr-> next ->prev = header_ptr;}// OF COURSE!! it's a doubly linked list!!
+  
+  header_ptr->allocated = false; // THE DEALLOCATION IS COMPLETE
+  printf("Is Allocated?: %d \n", header_ptr->allocated);
 } // free()
 // ==============================================================================
 
