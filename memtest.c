@@ -3,19 +3,52 @@
 
 int main (int argc, char **argv){
 
-  char* alloc1 = malloc(100);
-  char* alloc2 = malloc(200);
-  char* alloc3 = malloc(99);
+  char* ptr1 = malloc(100);
+  char* ptr2 = malloc(200);
+  char* ptr3 = malloc(300);
   
-  printf("alloc1 = %p\n", alloc1);
-  printf("alloc2 = %p\n", alloc2);
-  printf("alloc3 = %p\n", alloc3);
+  printf("P1 = %p\n", ptr1);
+  printf("P2 = %p\n", ptr2);
+  printf("P3 = %p\n", ptr3);
+  
+  char* a = realloc(ptr1, 30); //no change; should return ptr1
+  char* b = realloc(ptr2, 200);// no change; should return ptr1
+  char* c = realloc(ptr3, 330);// should return a new pointer to a bigger block
+  char* d = realloc(NULL, 99); //should return a new block
+  
+  printf("a should be P1 %p\n", a);
+  printf("b should be P2 %p\n", b);
+  printf("c should not be P3 %p\n", c);
+  printf("d should be a new address %p\n", d);
+  
+  char* e = realloc(ptr1, 0); // should delete block refered to by ptr1
+  printf("P1 = %p\n", ptr1);
+  
+  
+  
+  /* All these addresses have to be multiples of 16. An easy way to check
+   is to see whether they end with 0. If that's the case, then they are divisible.*/
+  char* firstSpace = (char*)malloc (30);
+   
+   char array[] = "Hello, again. I am back";
 
-  char* realloc1 = realloc(alloc1, 140); //should be different address
-  char* realloc2 = realloc(alloc2, 30);  //should be same address, different block size
-  char* realloc3 = realloc(alloc3, 99);  //should be same address, same block size
-  printf("realloc1 = %p\n", realloc1);
-  printf("realloc2 = %p\n", realloc2);
-  printf("realloc3 = %p\n", realloc3);
-  
+   for (int i = 0; i < 23 ; ++i){
+     firstSpace[i] = array [i];
+   }
+   char* smallCopy = (char*)realloc(firstSpace, 10); 
+   char* bigCopy = (char*)realloc(firstSpace, 60);
+   printf("Address of first string = %p\n", firstSpace);
+   printf("String: = %s\n", firstSpace);
+   // let'try boxes of a small and bigger size to see if the realloc() and memcpy() work
+   printf("[+] Testing realloc() on a string\n");
+   printf("Address of Small Copy  = %p\n", smallCopy);
+   printf("Small Copy: = %s\n", smallCopy);
+   printf("Address of Big Copy = %p\n", bigCopy);
+   printf("Big Copy: = %s\n", bigCopy);
+
+   printf("[+] Testing Free().  Freeing small copy...\n");
+   free(smallCopy);
+   printf("small Copy address should stay the same: %p \n", smallCopy);
+   printf("Small Copy contents: %s \n",smallCopy);
+
 }

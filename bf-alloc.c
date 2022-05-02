@@ -162,7 +162,7 @@ void* malloc (size_t size) {
   if (size == 0) {
     return NULL;
   }
-  size = roundUp(size);
+  //  size = roundUp(size);
 
   header_s* current = free_list_head;
   header_s* best    = NULL;
@@ -249,6 +249,7 @@ void* malloc (size_t size) {
  * \param ptr A pointer to the block to be deallocated.
  */
 void free (void* ptr) {
+  printf("free()...\n");
 
   if (ptr == NULL) {
     return;
@@ -278,7 +279,7 @@ void free (void* ptr) {
   header_ptr->next = free_list_head; // add the freed block to the front of the list of free blocks
   free_list_head   = header_ptr;
   header_ptr->allocated = false; // THE DEALLOCATIO IS COMPLETE
-
+  printf("Is Allocated?: %s \n", header_ptr->allocated);
 } // free()
 // ==============================================================================
 
