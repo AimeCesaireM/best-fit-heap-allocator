@@ -35,13 +35,17 @@ To use this allocator in your project, follow these steps:
    cd best-fit-allocator
    ```
 
-3. Compile the project (if applicable):
+3. Compile the entire project, use the provided Makefile:
+   ```bash
+   make
+   ```
+   To compile a specific file, use the GCC C++ compiler:
 
    ```bash
    gcc -o bf-alloc bf-alloc.c
    ```
 
-4. Include `bf-alloc.c` in your project and use the custom `malloc`, `free`, `calloc`, and `realloc` functions.
+5. Include `bf-alloc.c` in your project and use the custom `malloc`, `free`, `calloc`, and `realloc` functions.
 
 ## Usage
 
