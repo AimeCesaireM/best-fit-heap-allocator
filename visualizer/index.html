@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Heap Allocation Visualizer</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="page-header">
+      <div class="page-header__content">
+        <h1>Heap Allocation Visualizer</h1>
+        <p>
+          Explore how the custom best-fit allocator in <code>bf-alloc.c</code> manages dynamic memory. Walk through
+          <code>malloc</code>, <code>calloc</code>, <code>realloc</code>, <code>free</code>, the doubly linked free list,
+          pointer bumping, and block alignment—all in one place.
+        </p>
+      </div>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2>Allocator Overview</h2>
+        <div class="overview-grid">
+          <article>
+            <h3>Best-Fit Search</h3>
+            <p>
+              The allocator keeps a doubly linked list of free blocks. Each call to <code>malloc</code> scans that list to
+              find the smallest block that can satisfy the request. The block is optionally split when there is room for a
+              new header and payload.
+            </p>
+          </article>
+          <article>
+            <h3>Pointer Bumping</h3>
+            <p>
+              When no usable free block exists, the allocator “bumps” a pointer to carve fresh space from the reserved heap
+              region. This visualization tracks the bump pointer so you can see when the heap grows.
+            </p>
+          </article>
+          <article>
+            <h3>Block Alignment</h3>
+            <p>
+              All allocations are aligned on 16-byte boundaries. The visualizer highlights padding added to meet alignment
+              requirements so you can see where internal fragmentation appears.
+            </p>
+          </article>
+          <article>
+            <h3>Standard Interfaces</h3>
+            <p>
+              The custom versions of <code>calloc</code>, <code>realloc</code>, and <code>free</code> reuse the same heap
+              metadata. Use the controls below to run each method and inspect the free list and heap layout in real time.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Controls</h2>
+        <div class="control-panels">
+          <form id="malloc-form" class="control-panel" autocomplete="off">
+            <h3>malloc</h3>
+            <label for="malloc-size">Requested bytes</label>
+            <div class="control-panel__row">
+              <input id="malloc-size" type="number" min="1" step="1" value="64" required />
+              <button type="submit">Allocate</button>
+            </div>
+          </form>
+
+          <form id="calloc-form" class="control-panel" autocomplete="off">
+            <h3>calloc</h3>
+            <div class="control-panel__row">
+              <label for="calloc-nmemb">Elements</label>
+              <input id="calloc-nmemb" type="number" min="1" step="1" value="4" required />
+            </div>
+            <div class="control-panel__row">
+              <label for="calloc-size">Element bytes</label>
+              <input id="calloc-size" type="number" min="1" step="1" value="16" required />
+            </div>
+            <button type="submit">Allocate + Zero</button>
+          </form>
+
+          <form id="free-form" class="control-panel" autocomplete="off">
+            <h3>free</h3>
+            <label for="free-block">Active block</label>
+            <div class="control-panel__row">
+              <select id="free-block"></select>
+              <button type="submit">Release</button>
+            </div>
+          </form>
+
+          <form id="realloc-form" class="control-panel" autocomplete="off">
+            <h3>realloc</h3>
+            <label for="realloc-block">Active block</label>
+            <select id="realloc-block"></select>
+            <label for="realloc-size">New size (bytes)</label>
+            <div class="control-panel__row">
+              <input id="realloc-size" type="number" min="0" step="1" value="96" required />
+              <button type="submit">Resize</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="control-helpers">
+          <button id="reset-button" type="button">Reset heap</button>
+          <button id="demo-button" type="button">Play guided demo</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Heap State</h2>
+        <div class="visualizer">
+          <div class="heap-wrapper">
+            <div class="heap-header">
+              <span class="legend-item">
+                <span class="legend-swatch legend-swatch--allocated"></span>
+                Allocated payload
+              </span>
+              <span class="legend-item">
+                <span class="legend-swatch legend-swatch--free"></span>
+                Free payload
+              </span>
+              <span class="legend-item">
+                <span class="legend-swatch legend-swatch--header"></span>
+                Header (metadata)
+              </span>
+              <span class="legend-item legend-item--padding">
+                <span class="legend-swatch legend-swatch--padding"></span>
+                Alignment padding
+              </span>
+            </div>
+
+            <div id="heap-container">
+              <div id="heap-view" aria-live="polite" aria-label="Heap layout"></div>
+              <div id="bump-pointer" role="img" aria-label="Bump pointer">&#9650;</div>
+            </div>
+          </div>
+
+          <aside class="heap-details">
+            <div>
+              <h3>Free list (best-fit search order)</h3>
+              <ul id="free-list"></ul>
+            </div>
+            <div>
+              <h3>Allocated blocks</h3>
+              <ul id="allocated-list"></ul>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Operation Log</h2>
+        <div id="log-entries" aria-live="polite"></div>
+      </section>
+
+      <section class="card">
+        <h2>How to Explore</h2>
+        <ol class="instructions">
+          <li>Use <strong>malloc</strong> to see best-fit reuse when free blocks of different sizes exist.</li>
+          <li>Allocate until no free block fits to trigger <strong>pointer bumping</strong>.</li>
+          <li>Try <strong>calloc</strong> to see zeroed blocks and padding highlighted in the payload details.</li>
+          <li>Create fragmentation, then <strong>free</strong> and observe coalescing of adjacent free blocks.</li>
+          <li>Use <strong>realloc</strong> to shrink or grow allocations—the visualizer shows copies and block splits.</li>
+          <li>Click “Play guided demo” for a curated sequence that touches every method.</li>
+        </ol>
+      </section>
+    </main>
+
+    <footer class="page-footer">
+      <p>
+        Built for the <code>bf-alloc.c</code> heap allocator. Source on this branch at
+        <code>/visualizer</code>.
+      </p>
+    </footer>
+
+    <script src="app.js" type="module"></script>
+  </body>
+</html>
