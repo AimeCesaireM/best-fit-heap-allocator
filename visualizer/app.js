@@ -23,6 +23,7 @@ const dom = {
 };
 
 class HeapVisualizer {
+
   constructor(options = {}) {
     this.heapLimit = options.heapLimit ?? 2048; // bytes
     this.headerSize = options.headerSize ?? 16;

@@ -106,11 +106,16 @@ main {
   display: grid;
   gap: 1.2rem;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+
 }
 
 .control-panel {
   display: flex;
   flex-direction: column;
+  flex-grow: ;
   gap: 0.6rem;
   padding: 1.1rem;
   border-radius: 12px;
