@@ -75,6 +75,23 @@ int main() {
 }
 ```
 
+## Heap Allocation Visualizer
+
+An interactive website lives in `visualizer/` to demonstrate how the allocator manages the heap, including the best-fit search, pointer bumping, block alignment, and the behaviour of `malloc`, `free`, `calloc`, and `realloc`.
+
+- **Preview locally**  
+  Serve the directory with any static file host, e.g.
+  ```bash
+  python3 -m http.server --directory visualizer 8000
+  ```
+  Then visit `http://localhost:8000` in a browser.
+
+- **What you’ll see**  
+  A live heap diagram, free-list inspector, operation log, and a guided demo that exercises every allocation method implemented in `bf-alloc.c`.
+
+- **Manual exploration**  
+  Use the control panel to issue allocations, frees, and reallocations. The visualizer highlights the block chosen by the best-fit algorithm and shows when the bump pointer grows the heap.
+
 ## API Reference
 
 ### `void init()`
